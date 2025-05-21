@@ -1,17 +1,24 @@
 const express = require('express');
-const db = require('../DB.JS');
+const db = require('../DB.JS'); // deve exportar uma conexão com mysql2/promise
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 router.post('/register', async (req, res) => {
-    const { name, email, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const query = 'INSERT INTO users (name, email, password) VALUES (?, ?, ?)';
-    db.query(query, [name, email, hashedPassword], (err, result) => {
-        if (err) return res.status(500).json(err);
-        res.status(201).json({ message: "Usuário registrado!" });
-    });
+    try {
+        const { name, email, password } = req.body;
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const query = 'INSERT INTO users (name, email, password) VALUES (?, ?, ?)';
+
+        await db.query(query, [name, email, hashedPassword]);
+
+        res.status(201).send("Usuário registrado com sucesso!");
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Erro ao registrar usuário' });
+    }
 });
+
 module.exports = router;
